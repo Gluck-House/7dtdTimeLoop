@@ -124,9 +124,19 @@ jobs:
       - name: Build mod
         run: ./build.sh
 
+      - name: Stage artifact contents
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          artifact_root="TimeLoop/build/artifact"
+          rm -rf "$artifact_root"
+          mkdir -p "$artifact_root/timeloop"
+          cp -R TimeLoop/build/TimeLoop/. "$artifact_root/timeloop/"
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: TimeLoop-${{ github.sha }}
-          path: TimeLoop/build/TimeLoop/
+          path: TimeLoop/build/artifact/
           if-no-files-found: error

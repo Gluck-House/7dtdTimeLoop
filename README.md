@@ -32,7 +32,7 @@ If you build from this repo, `./build.sh` creates:
 
 - `TimeLoop/build/TimeLoop/` containing the unpacked mod files
 
-The GitHub Actions workflow uploads `TimeLoop/build/TimeLoop/` as a build artifact.
+The GitHub Actions workflow uploads an artifact that contains a top-level `timeloop/` folder ready to drop into `Mods/`.
 
 ## Quick Start
 

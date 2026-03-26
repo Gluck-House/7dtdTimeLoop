@@ -15,6 +15,6 @@ STEAMCMD_MODE=docker ./scripts/download_7dtd_server.sh
 ## Notes
 
 - `deps/`, `.cache/`, `.tools/`, and `TimeLoop/build/` are local-only and ignored by git.
-- CI uploads `TimeLoop/build/TimeLoop/` as the build artifact.
+- CI uploads an artifact with a top-level `timeloop/` folder for direct use in `Mods/`.
 - Keep changes portable. Avoid absolute filesystem paths and machine-specific assumptions in docs or scripts.
 - The project currently builds with .NET SDK 8 while targeting `netstandard2.1` for the game-facing assembly.
