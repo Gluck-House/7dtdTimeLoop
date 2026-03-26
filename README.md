@@ -141,7 +141,7 @@ dotnet build TimeLoop/TimeLoop.sln -p:OutputPath="/path/to/7DaysToDie/Mods/TimeL
 
 - `deps/` is local-only and ignored by git except for its README.
 - `.cache/` and `.tools/` are local helper directories created by the download/build workflow.
-- `build.sh` requires `zip` in addition to the .NET SDK.
+- `build.sh` uses `zip` when available and falls back to `python3` if `zip` is not installed.
 
 ## Attribution
 

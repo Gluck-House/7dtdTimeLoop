@@ -23,11 +23,6 @@ if [ ! -d "$build_output_dir" ]; then
     exit 1
 fi
 
-if ! command -v zip >/dev/null 2>&1; then
-    echo "zip command not found." >&2
-    exit 1
-fi
-
 staging_dir="$(mktemp -d)"
 trap 'rm -rf "$staging_dir"' EXIT
 
@@ -35,9 +30,35 @@ mkdir -p "$(dirname "$zip_path")" "$staging_dir/$zip_root_dir"
 cp -R "$build_output_dir"/. "$staging_dir/$zip_root_dir/"
 
 rm -f "$zip_path"
-(
-    cd "$staging_dir"
-    zip -rq "$zip_path" "$zip_root_dir"
-)
+
+if command -v zip >/dev/null 2>&1; then
+    (
+        cd "$staging_dir"
+        zip -rq "$zip_path" "$zip_root_dir"
+    )
+elif command -v python3 >/dev/null 2>&1; then
+    STAGING_DIR="$staging_dir" ZIP_ROOT_DIR="$zip_root_dir" ZIP_PATH="$zip_path" python3 <<'PY'
+import os
+import pathlib
+import zipfile
+
+staging_dir = pathlib.Path(os.environ["STAGING_DIR"])
+zip_root_dir = pathlib.Path(os.environ["ZIP_ROOT_DIR"])
+zip_path = pathlib.Path(os.environ["ZIP_PATH"])
+source_root = staging_dir / zip_root_dir
+
+with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    zf.write(source_root, zip_root_dir.as_posix() + "/")
+    for path in sorted(source_root.rglob("*")):
+        arcname = path.relative_to(staging_dir).as_posix()
+        if path.is_dir():
+            zf.write(path, arcname + "/")
+        else:
+            zf.write(path, arcname)
+PY
+else
+    echo "Neither 'zip' nor 'python3' is available to create $zip_path." >&2
+    exit 1
+fi
 
 echo "Created archive: $zip_path"
