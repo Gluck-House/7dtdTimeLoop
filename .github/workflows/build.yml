@@ -121,14 +121,47 @@ jobs:
           BUILD_ID=${TIMELOOP_BUILD_ID}
           EOF
 
-      - name: Build mod and package zip
+      - name: Build mod
         run: ./build.sh
 
-      - name: Upload build artifact
+      - name: Prepare package staging directory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_root="TimeLoop/build/package"
+          rm -f TimeLoop/build/TimeLoop.zip TimeLoop/build/TimeLoop.tar.gz
+          rm -rf "$package_root"
+          mkdir -p "$package_root/timeloop"
+          cp -R TimeLoop/build/TimeLoop/. "$package_root/timeloop/"
+
+      - name: Create zip package
+        uses: vimtor/action-zip@v1.3
+        with:
+          files: TimeLoop/build/package/timeloop
+          dest: TimeLoop/build/TimeLoop.zip
+          recursive: false
+
+      - name: Create tar.gz package
+        uses: a7ul/tar-action@v1.2.0
+        id: tar-package
+        with:
+          command: c
+          cwd: TimeLoop/build/package
+          files: |
+            ./timeloop
+          outPath: ${{ github.workspace }}/TimeLoop/build/TimeLoop.tar.gz
+
+      - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: TimeLoop-${{ github.sha }}
-          path: |
-            TimeLoop/build/TimeLoop.zip
-            TimeLoop/build/TimeLoop/
+          name: TimeLoop-zip-${{ github.sha }}
+          path: TimeLoop/build/TimeLoop.zip
+          if-no-files-found: error
+
+      - name: Upload tar.gz artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TimeLoop-tar-gz-${{ github.sha }}
+          path: TimeLoop/build/TimeLoop.tar.gz
           if-no-files-found: error
