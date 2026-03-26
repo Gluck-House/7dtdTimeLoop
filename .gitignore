@@ -192,6 +192,15 @@ publish/
 # in these scripts will be unencrypted
 PublishScripts/
 
+# Repo-local tooling, caches, and packaged artifacts
+.cache/
+.tools/
+TimeLoop/build/
+
+# Game assemblies copied in for local builds
+deps/*.dll
+depts/
+
 # NuGet Packages
 *.nupkg
 # NuGet Symbol Packages

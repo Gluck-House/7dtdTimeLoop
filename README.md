@@ -1,98 +1,145 @@
 # TimeLoop
 
-A mod that allows you to loop time while certain players are not in the server.
+TimeLoop is a server-side 7 Days to Die mod that pauses day progression unless your configured player conditions are met.
+
+The current repository state builds against 7 Days to Die V2.5 dedicated server assemblies.
+
+## What it does
+
+TimeLoop supports four operating modes:
+
+- `always`: always loop the day
+- `whitelist`: time only passes when an authorized player is online
+- `threshold`: time only passes when at least `MinPlayers` players are online
+- `whitelisted_threshold`: time only passes when at least `MinPlayers` authorized players are online
+
+It also supports:
+
+- per-player authorization
+- loop limits
+- skip-days
+- multiple locales
+- server console commands for runtime changes
+
+## Installation
+
+1. Build the mod or download a release archive.
+2. Copy the `timeloop/` folder into your server `Mods/` directory.
+3. Start the server once.
+4. Edit `TimeLooper.xml` generated inside the mod folder if you want to change defaults.
+
+If you build from this repo, `./build.sh` creates:
+
+- `TimeLoop/build/TimeLoop/` containing the unpacked mod files
+- `TimeLoop/build/TimeLoop.zip` containing a top-level `timeloop/` folder ready to upload or extract into `Mods/`
+
+## Quick Start
+
+To enable the mod and require at least two players for time to pass:
+
+```text
+tl_enable 1
+tl_mode 2
+tl_min 2
+```
 
 ## Configuration
 
-The configuration file gets generated when you launch the mod for the first time.
+The configuration file is created automatically on first launch if it does not exist.
 
-Here's an example of the configuration file:
+Example:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <TimeLoopConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <!-- Enables the mod -->
   <Enabled>true</Enabled>
-  <!--
-  "always" is Always mode, which means this day will loop no matter what.
-  "whitelist" is Whitelist mode, which means only players with `Whitelisted="true"` will move time
-  "threshold" is MinPlayers mode, which means time only moves when x amount of players are online
-  "whitelisted_threshold" is the combination of the two above: time only moves when x amount of whitelisted players are online
-  -->
   <Mode>whitelist</Mode>
-  <!-- List of players -->
   <Players>
-    <!-- In Whitelist mode, change `Whitelisted` to "true" to whitelist a player -->
     <PlayerModel ID="Steam_76561198061215936" Name="Yui" Whitelisted="false" />
   </Players>
-  <!-- In threshold mode, change the value below to set the amount of minimum players -->
   <MinPlayers>1</MinPlayers>
-  <!-- Skip looping for x amount of days. 0 to disable -->
   <DaysToSkip>0</DaysToSkip>
-  <!-- Limit max loops per day. 0 to unlimited loops -->
   <LoopLimit>0</LoopLimit>
-  <!-- Global language for the mod. Check the i18n folder for available languages -->
   <Language>en_us</Language>
-  <!-- That's it, you're done. -->
 </TimeLoopConfig>
 ```
 
-## Console commands
+Notes:
 
-**v2.2.0 or greater required**
+- `LoopLimit=0` means unlimited loops.
+- `DaysToSkip=0` disables skip-days.
+- Locale files live in `i18n/`.
 
-```
-tl_enable <0/1> - Enables or Disables the Mod
-  0 - Disable
-  1 - Enable
+## Console Commands
 
-tl_mode <0/1/2/3> - Changes the mode.
-  0 - Always.
-  1 - Whitelist
-  2 - Threshold
-  3 - Whitelisted Threshold
+The mod exposes these server console commands:
 
-tl_auth <platform_id/player_name> <0/1> - (Un)authorizes a player.
-  (Whitelist or Whitelisted Threshold only)
-  platform_id/player_name - Player that will get their authorization status changed.
-  0 - Unauthorize
-  1 - Authorize
+- `tl_enable [0|1]`
+  Aliases: `timeloop_enable`, `timeloop`
+- `tl_mode [0|1|2|3]`
+  Alias: `timeloop_mode`
+- `tl_auth <platform_id|player_name> <0|1>`
+  Aliases: `tl_authorize`, `timeloop_auth`, `timeloop_authorize`
+- `tl_min [amount]`
+  Aliases: `tl_minplayers`, `timeloop_minplayers`
+- `tl_list [all|auth|unauth]`
+  Alias: `timeloop_list`
+- `tl_ll [amount]`
+  Aliases: `tl_looplimit`, `timeloop_looplimit`
+- `tl_skipdays [days]`
+  Alias: `timeloop_skipdays`
+- `tl_state`
+  Alias: `timeloop_state`
+- `tl_locale [locale]`
+  Alias: `timeloop_locale`
 
-tl_minplayers <amount> - Changes the minimum amount of players required to pass time.
-  (Threshold or Whitelisted Threshold only)
-  <amount> - New amount of players
- 
-tl_list <all/auth/unauth> - Lists the players registed in the database
-  all - Shows all players
-  auth - Shows all authorized players
-  unauth - Shows all unauthorized players
-
-tl_ll <amount> - Limit the amount of loops a day can have.
-    <amount> - The amount of loops a day can have. 0 to loop indefinitely.
-
-tl_skipdays <days> - Skip the looping for N amount of days.
-    <days> - The amount of days to skip looping.
-
-tl_state - Displays if the current day will loop or not.
-
-tl_locale <locale> - Changes the current language.
-    <locale> - The locale available in i18n folder, without .json.
-```
+Omitting arguments on most commands prints the current state.
 
 ## Building
 
-You need:
+Requirements:
 
-- Windows 10 or greater
-- Any C#/.NET IDE
-- .NET Framework 4.8 SDK
-- 7 Days to Die installation
+- .NET SDK 8.0 or greater
+- a copy of the 7 Days to Die dedicated server assemblies
 
-### Get the DLLs
+### Get the game assemblies
 
-Check the README on the `depts` folder.
+The project expects local game references in `deps/`:
 
-### Change build folder
+- `0Harmony.dll`
+- `Assembly-CSharp.dll`
+- `LogLibrary.dll`
+- `UnityEngine.dll`
+- `UnityEngine.CoreModule.dll`
 
-1. Open `TimeLoop.proj` on a text editor
-2. Change `BaseOutputPath` and `OutputPath` to your desired path
+See [deps/README.md](deps/README.md) for the supported ways to populate that folder.
+
+### Build
+
+From the repo root:
+
+```bash
+./build.sh
+```
+
+If you want to invoke MSBuild directly instead:
+
+```bash
+dotnet build TimeLoop/TimeLoop.sln
+```
+
+### Build directly into a Mods folder
+
+```bash
+dotnet build TimeLoop/TimeLoop.sln -p:OutputPath="/path/to/7DaysToDie/Mods/TimeLoop/"
+```
+
+## Development Notes
+
+- `deps/` is local-only and ignored by git except for its README.
+- `.cache/` and `.tools/` are local helper directories created by the download/build workflow.
+- `build.sh` requires `zip` in addition to the .NET SDK.
+
+## License
+
+This repository is licensed under the terms in [LICENSE](LICENSE).
