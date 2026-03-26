@@ -199,6 +199,7 @@ TimeLoop/build/
 
 # Game assemblies copied in for local builds
 deps/*.dll
+deps/.7dtd-version
 depts/
 
 # NuGet Packages

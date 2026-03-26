@@ -48,3 +48,4 @@ DEPS_DIR=/custom/deps/path ./scripts/download_7dtd_server.sh
 
 - Docker mode avoids needing a host `steamcmd` install.
 - Host `steamcmd` on Linux may require 32-bit glibc/Steam runtime support.
+- CI pins the expected game build in `.github/7dtd-version.env` and caches `deps/` against that file.

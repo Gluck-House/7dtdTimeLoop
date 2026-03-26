@@ -1,0 +1,129 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on:
+      - actions-runner-scale-set
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.GHA_CACHE_BUCKET_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.GHA_CACHE_BUCKET_KEY_SECRET }}
+      RUNS_ON_S3_BUCKET_CACHE: ${{ vars.GHA_CACHE_BUCKET_NAME }}
+      RUNS_ON_S3_BUCKET_ENDPOINT: ${{ vars.GHA_CACHE_ENDPOINT }}
+      RUNS_ON_S3_FORCE_PATH_STYLE: "true"
+      RUNS_ON_RUNNER_NAME: ""
+      AWS_REGION: eu-west-2
+      AWS_DEFAULT_REGION: eu-west-2
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Load pinned 7DTD version
+        shell: bash
+        run: |
+          set -euo pipefail
+          source .github/7dtd-version.env
+          echo "APP_ID=${APP_ID}" >> "$GITHUB_ENV"
+          echo "TIMELOOP_BRANCH=${BRANCH}" >> "$GITHUB_ENV"
+          echo "TIMELOOP_BUILD_ID=${BUILD_ID}" >> "$GITHUB_ENV"
+
+      - name: Cache 7 Days to Die build dependencies
+        id: cache-deps
+        uses: runs-on/cache@v4
+        with:
+          path: deps/
+          key: 7dtd-deps-v2|${{ runner.os }}|${{ hashFiles('.github/7dtd-version.env', 'scripts/download_7dtd_server.sh') }}
+          restore-keys: |
+            7dtd-deps-v2|${{ runner.os }}
+
+      - name: Verify cached dependency metadata
+        id: verify_deps
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_files=(
+            deps/0Harmony.dll
+            deps/Assembly-CSharp.dll
+            deps/LogLibrary.dll
+            deps/UnityEngine.dll
+            deps/UnityEngine.CoreModule.dll
+            deps/.7dtd-version
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing cached dependency artifact: $file"
+              exit 1
+            fi
+          done
+
+          source deps/.7dtd-version
+
+          test "${APP_ID}" = "${{ env.APP_ID }}"
+          test "${BRANCH}" = "${{ env.TIMELOOP_BRANCH }}"
+          test "${BUILD_ID}" = "${{ env.TIMELOOP_BUILD_ID }}"
+        continue-on-error: true
+
+      - name: Download dedicated server assemblies
+        shell: bash
+        if: steps.cache-deps.outputs.cache-hit != 'true' || steps.verify_deps.outcome != 'success'
+        run: |
+          set -euo pipefail
+
+          STEAMCMD_MODE=docker APP_ID="${APP_ID}" BRANCH="${TIMELOOP_BRANCH}" ./scripts/download_7dtd_server.sh
+
+          manifest_path=".cache/7dtd-dedicated-server/steamapps/appmanifest_${APP_ID}.acf"
+          if [ ! -f "$manifest_path" ]; then
+            echo "Steam app manifest not found: $manifest_path" >&2
+            exit 1
+          fi
+
+          actual_build_id="$(grep -E '"buildid"' "$manifest_path" | head -n1 | sed -E 's/.*"buildid"[[:space:]]+"([0-9]+)".*/\1/')"
+          if [ -z "$actual_build_id" ]; then
+            echo "Could not determine buildid from $manifest_path" >&2
+            exit 1
+          fi
+
+          if [ "$actual_build_id" != "$TIMELOOP_BUILD_ID" ]; then
+            echo "Pinned build mismatch: expected $TIMELOOP_BUILD_ID, got $actual_build_id" >&2
+            exit 1
+          fi
+
+          cat > deps/.7dtd-version <<EOF
+          APP_ID=${APP_ID}
+          BRANCH=${TIMELOOP_BRANCH}
+          BUILD_ID=${TIMELOOP_BUILD_ID}
+          EOF
+
+      - name: Build mod and package zip
+        run: ./build.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TimeLoop-${{ github.sha }}
+          path: |
+            TimeLoop/build/TimeLoop.zip
+            TimeLoop/build/TimeLoop/
+          if-no-files-found: error
