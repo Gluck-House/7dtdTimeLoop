@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 version_file="${VERSION_FILE:-$repo_root/.github/7dtd-version.env}"
 tools_dir="${TOOLS_DIR:-$repo_root/.tools}"
 steamcmd_dir="${STEAMCMD_DIR:-$tools_dir/steamcmd}"
+steamcmd_bin="${STEAMCMD_BIN:-$steamcmd_dir/steamcmd.sh}"
 steam_state_dir="${STEAM_STATE_DIR:-$repo_root/.cache/steamcmd}"
 steamcmd_url="${STEAMCMD_URL:-https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz}"
 steamcmd_mode="${STEAMCMD_MODE:-auto}"
@@ -46,7 +47,7 @@ require_steamcmd_runtime() {
 }
 
 can_use_local_steamcmd() {
-    [ -x "$steamcmd_dir/steamcmd.sh" ] || return 1
+    [ -x "$steamcmd_bin" ] || return 1
     [ -e /lib/ld-linux.so.2 ] || [ -e /lib32/ld-linux.so.2 ] || [ -e /lib/i386-linux-gnu/ld-linux.so.2 ]
 }
 
@@ -56,7 +57,7 @@ can_use_container_runtime() {
 }
 
 install_steamcmd() {
-    if [ -x "$steamcmd_dir/steamcmd.sh" ]; then
+    if [ -x "$steamcmd_bin" ]; then
         return
     fi
 
@@ -71,6 +72,7 @@ install_steamcmd() {
     trap "rm -f '$archive'" RETURN
     curl -fsSL "$steamcmd_url" -o "$archive"
     tar -xzf "$archive" -C "$steamcmd_dir"
+    steamcmd_bin="$steamcmd_dir/steamcmd.sh"
 }
 
 append_login_args() {
@@ -96,7 +98,7 @@ run_steamcmd_local() {
     install_steamcmd
     require_steamcmd_runtime
 
-    local -a cmd=("$steamcmd_dir/steamcmd.sh")
+    local -a cmd=("$steamcmd_bin")
     append_login_args cmd
     cmd+=(+app_info_update 1 +app_info_print "$app_id" +quit)
 

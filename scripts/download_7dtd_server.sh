@@ -4,6 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 tools_dir="${TOOLS_DIR:-$repo_root/.tools}"
 steamcmd_dir="${STEAMCMD_DIR:-$tools_dir/steamcmd}"
+steamcmd_bin="${STEAMCMD_BIN:-$steamcmd_dir/steamcmd.sh}"
 server_dir="${SERVER_DIR:-$repo_root/.cache/7dtd-dedicated-server}"
 deps_dir="${DEPS_DIR:-$repo_root/deps}"
 steam_state_dir="${STEAM_STATE_DIR:-$repo_root/.cache/steamcmd}"
@@ -40,10 +41,11 @@ ensure_command() {
 }
 
 require_steamcmd_runtime() {
-    local steamcmd_bin="$steamcmd_dir/linux32/steamcmd"
+    local steamcmd_runtime_bin
+    steamcmd_runtime_bin="$(cd "$(dirname "$steamcmd_bin")" && pwd)/linux32/steamcmd"
 
-    if [ ! -f "$steamcmd_bin" ]; then
-        fail "steamcmd binary not found after install: $steamcmd_bin"
+    if [ ! -f "$steamcmd_runtime_bin" ]; then
+        fail "steamcmd binary not found after install: $steamcmd_runtime_bin"
     fi
 
     if [ ! -e /lib/ld-linux.so.2 ] && [ ! -e /lib32/ld-linux.so.2 ] && [ ! -e /lib/i386-linux-gnu/ld-linux.so.2 ]; then
@@ -52,7 +54,7 @@ require_steamcmd_runtime() {
 }
 
 can_use_local_steamcmd() {
-    [ -x "$steamcmd_dir/steamcmd.sh" ] || return 1
+    [ -x "$steamcmd_bin" ] || return 1
 
     [ -e /lib/ld-linux.so.2 ] || [ -e /lib32/ld-linux.so.2 ] || [ -e /lib/i386-linux-gnu/ld-linux.so.2 ]
 }
@@ -63,7 +65,7 @@ can_use_container_runtime() {
 }
 
 install_steamcmd() {
-    if [ -x "$steamcmd_dir/steamcmd.sh" ]; then
+    if [ -x "$steamcmd_bin" ]; then
         return
     fi
 
@@ -78,6 +80,7 @@ install_steamcmd() {
     trap 'rm -f "$archive"' RETURN
     curl -fsSL "$steamcmd_url" -o "$archive"
     tar -xzf "$archive" -C "$steamcmd_dir"
+    steamcmd_bin="$steamcmd_dir/steamcmd.sh"
 }
 
 build_login_args() {
@@ -145,7 +148,7 @@ run_steamcmd_local() {
     mkdir -p "$server_dir"
 
     local cmd=(
-        "$steamcmd_dir/steamcmd.sh"
+        "$steamcmd_bin"
         +force_install_dir "$server_dir"
     )
 
