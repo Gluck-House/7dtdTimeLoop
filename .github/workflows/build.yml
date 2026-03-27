@@ -30,6 +30,7 @@ jobs:
       DOTNET_NOLOGO: "true"
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_INSTALL_DIR: ${{ github.workspace }}/.dotnet
+      STEAMCMD_DOCKER_IMAGE: cm2network/steamcmd:root
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -61,9 +62,36 @@ jobs:
           restore-keys: |
             7dtd-deps-v2|${{ runner.os }}
 
-      - name: Set up SteamCMD
-        id: setup-steamcmd
-        uses: andriivitiv/setup-steamcmd@v1
+      - name: Cache SteamCMD container image
+        uses: runs-on/cache@v4
+        with:
+          path: .cache/docker/steamcmd-image.tar
+          key: steamcmd-image-v1|${{ runner.os }}|cm2network-steamcmd-root
+          restore-keys: |
+            steamcmd-image-v1|${{ runner.os }}
+
+      - name: Cache SteamCMD state
+        uses: runs-on/cache@v4
+        with:
+          path: .cache/steamcmd/
+          key: steamcmd-state-v1|${{ runner.os }}
+          restore-keys: |
+            steamcmd-state-v1|${{ runner.os }}
+
+      - name: Load or pull SteamCMD container image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cache_path=".cache/docker/steamcmd-image.tar"
+          mkdir -p "$(dirname "$cache_path")"
+
+          if [ -f "$cache_path" ]; then
+            docker load -i "$cache_path"
+          else
+            docker pull "${STEAMCMD_DOCKER_IMAGE}"
+            docker save "${STEAMCMD_DOCKER_IMAGE}" -o "$cache_path"
+          fi
 
       - name: Verify cached dependency metadata
         id: verify_deps
@@ -100,7 +128,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          STEAMCMD_MODE=local STEAMCMD_BIN="${{ steps.setup-steamcmd.outputs.executable }}" APP_ID="${APP_ID}" BRANCH="${TIMELOOP_BRANCH}" ./scripts/download_7dtd_server.sh
+          STEAMCMD_MODE=docker DOCKER_IMAGE="${STEAMCMD_DOCKER_IMAGE}" STEAM_STATE_DIR="${{ github.workspace }}/.cache/steamcmd" APP_ID="${APP_ID}" BRANCH="${TIMELOOP_BRANCH}" ./scripts/download_7dtd_server.sh
 
           manifest_path=".cache/7dtd-dedicated-server/steamapps/appmanifest_${APP_ID}.acf"
           if [ ! -f "$manifest_path" ]; then

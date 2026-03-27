@@ -29,14 +29,42 @@ jobs:
       RUNS_ON_RUNNER_NAME: ""
       AWS_REGION: eu-west-2
       AWS_DEFAULT_REGION: eu-west-2
+      STEAMCMD_DOCKER_IMAGE: cm2network/steamcmd:root
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Set up SteamCMD
-        id: setup-steamcmd
-        uses: andriivitiv/setup-steamcmd@v1
+      - name: Cache SteamCMD container image
+        uses: runs-on/cache@v4
+        with:
+          path: .cache/docker/steamcmd-image.tar
+          key: steamcmd-image-v1|${{ runner.os }}|cm2network-steamcmd-root
+          restore-keys: |
+            steamcmd-image-v1|${{ runner.os }}
+
+      - name: Cache SteamCMD state
+        uses: runs-on/cache@v4
+        with:
+          path: .cache/steamcmd/
+          key: steamcmd-state-v1|${{ runner.os }}
+          restore-keys: |
+            steamcmd-state-v1|${{ runner.os }}
+
+      - name: Load or pull SteamCMD container image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cache_path=".cache/docker/steamcmd-image.tar"
+          mkdir -p "$(dirname "$cache_path")"
+
+          if [ -f "$cache_path" ]; then
+            docker load -i "$cache_path"
+          else
+            docker pull "${STEAMCMD_DOCKER_IMAGE}"
+            docker save "${STEAMCMD_DOCKER_IMAGE}" -o "$cache_path"
+          fi
 
       - name: Check pinned 7DTD build id
         id: check
@@ -45,7 +73,7 @@ jobs:
           set -euo pipefail
 
           set +e
-          STEAMCMD_MODE=local STEAMCMD_BIN="${{ steps.setup-steamcmd.outputs.executable }}" ./scripts/check_7dtd_build.sh
+          STEAMCMD_MODE=docker DOCKER_IMAGE="${STEAMCMD_DOCKER_IMAGE}" STEAM_STATE_DIR="${{ github.workspace }}/.cache/steamcmd" ./scripts/check_7dtd_build.sh
           status=$?
           set -e
 
