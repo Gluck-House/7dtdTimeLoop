@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; DO NOT EDIT MANUALLY.
-_commit: 60d73111d39cebe0686ec08717c443614b233bb6
+_commit: v0.1.0
 _src_path: https://github.com/Gluck-House/7dtd-mod-template
 command_prefix_long: timeloop
 command_prefix_short: tl
@@ -7,11 +7,13 @@ config_example_file_name: TimeLooper_example.xml
 config_root_name: TimeLoopConfig
 config_stem: TimeLooper
 copyright_holder: leehil
-copyright_year: "2024"
+copyright_year: '2024'
 github_owner: Gluck-House
-log_prefix: "[TimeLoop]"
+log_prefix: '[TimeLoop]'
 mod_author: leehil, yuyui.moe, Gluck-House
-mod_description: A 7 Days to Die mod that resets the day if not enough players or authorized players are online
+mod_description: A 7 Days to Die mod that resets the day if not enough players or
+    authorized players are online
 mod_display_name: TimeLoop
 project_name: TimeLoop
 repo_name: 7dtdTimeLoop
+
