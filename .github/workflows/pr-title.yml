@@ -1,0 +1,17 @@
+name: pr-title
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    uses: "Gluck-House/7dtd-mod-infra/.github/workflows/reusable-pr-title.yml@main"
+    secrets: inherit
