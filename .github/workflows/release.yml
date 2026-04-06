@@ -13,5 +13,5 @@ jobs:
     uses: Gluck-House/7dtd-mod-infra/.github/workflows/reusable-release.yml@main
     secrets: inherit
     with:
-      project_name: TimeLoop
-      artifact_folder: timeloop
+      project_name: "TimeLoop"
+      artifact_folder: "TimeLoop"
