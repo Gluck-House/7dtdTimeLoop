@@ -18,18 +18,8 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ["whitelisted-threshold"] = EMode.WhitelistedThreshold
         };
 
-        private static string GetModeLocaleKey(EMode mode) {
-            return mode switch {
-                EMode.Always => "always",
-                EMode.Whitelist => "whitelist",
-                EMode.Threshold => "threshold",
-                EMode.WhitelistedThreshold => "whitelisted_threshold",
-                _ => "cmd_mode_invalid_mode"
-            };
-        }
-
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_mode_help");
+            return "Usage:\ntl_mode <always|whitelist|threshold|whitelisted_threshold|0|1|2|3>\n    0 or always - Change to always-loop mode\n    1 or whitelist - Change to whitelist mode\n    2 or threshold - Change to threshold mode\n    3 or whitelisted_threshold - Change to whitelisted threshold mode";
         }
 
         public override string[] getCommands() {
@@ -37,29 +27,29 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.Localize("cmd_mode_desc");
+            return "Changes the TimeLoop mode.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (_params.Count == 0) {
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix(
-                    "cmd_mode_state",
-                    LocaleManager.Instance.Localize(GetModeLocaleKey(ConfigManager.Instance.Config.Mode))));
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix(
+                    "Current mode: {0}",
+                    TimeLoopText.ModeName(ConfigManager.Instance.Config.Mode)));
                 return;
             }
 
             if (!CommandHelper.ValidateCount(_params, 1)) return;
 
             if (!ModeAliases.TryGetValue(_params[0], out var newMode)) {
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_mode_invalid_mode"));
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Invalid mode specified."));
                 return;
             }
 
             ConfigManager.Instance.Config.Mode = newMode;
             ConfigManager.Instance.SaveToFile();
             TimeLoopManager.Instance.UpdateLoopState();
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_mode_return",
-                LocaleManager.Instance.Localize(GetModeLocaleKey(ConfigManager.Instance.Config.Mode))));
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Mode changed to {0}.",
+                TimeLoopText.ModeName(ConfigManager.Instance.Config.Mode)));
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TimeLoop.Helpers;
 using TimeLoop.Managers;
 using TimeLoop.Models;
 
@@ -71,7 +72,7 @@ namespace TimeLoop.Services {
             var player = GetPlayer(clientInfo);
             if (player != null)
                 return player.IsAuthorized;
-            Log.Error(LocaleManager.Instance.LocalizeWithPrefix("log_player_data_not_found", clientInfo.playerName));
+            Log.Error(TimeLoopText.WithPrefix("Player data could not be found for player {0}.", clientInfo.playerName));
             return false;
         }
     }

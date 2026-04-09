@@ -5,7 +5,7 @@ using TimeLoop.Managers;
 namespace TimeLoop.Modules.ConsoleCommands {
     public class LoopLimitCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_looplimit_help");
+            return "Usage:\ntl_looplimit <amount>\n    <amount> - The amount of loops a day can have. 0 to loop indefinitely.";
         }
 
         public override string[] getCommands() {
@@ -13,16 +13,15 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_looplimit_desc");
+            return "Limit the amount of loops a day can have.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (_params.Count == 0) {
                 var loopLimit = ConfigManager.Instance.Config.LoopLimit > 0
                     ? ConfigManager.Instance.Config.LoopLimit.ToString()
-                    : LocaleManager.Instance.Localize("infinite");
-                SdtdConsole.Instance.Output(
-                    LocaleManager.Instance.LocalizeWithPrefix("cmd_looplimit_state", loopLimit));
+                    : "infinite";
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Current loop limit is {0}", loopLimit));
                 return;
             }
 
@@ -32,7 +31,7 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.Config.LoopLimit = newValue;
             ConfigManager.Instance.SaveToFile();
             TimeLoopManager.Instance.UpdateLoopState();
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_looplimit_return", newValue));
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Loop limit changed to {0}", newValue));
         }
     }
 }

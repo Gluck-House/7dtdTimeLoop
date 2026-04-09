@@ -5,7 +5,7 @@ using TimeLoop.Managers;
 namespace TimeLoop.Modules.ConsoleCommands {
     public class SkipDayCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_skipdays_help");
+            return "Usage:\ntl_skipdays <days>\n    <days> The amount of days to skip looping.";
         }
 
         public override string[] getCommands() {
@@ -13,18 +13,17 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_desc");
+            return "Skip the looping for N amount of days.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (_params.Count == 0) {
                 if (ConfigManager.Instance.Config.DaysToSkip == 0) {
-                    SdtdConsole.Instance.Output(
-                        LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_disabled"));
+                    SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("No days will skip the loop."));
                     return;
                 }
 
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_enabled",
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("The following {0} day(s) will skip the loop",
                     ConfigManager.Instance.Config.DaysToSkip));
                 return;
             }
@@ -35,11 +34,11 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.Config.DaysToSkip = days;
             ConfigManager.Instance.SaveToFile();
             if (days == 0) {
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_disabled"));
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("No days will skip the loop."));
                 return;
             }
 
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_enabled", days));
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("The following {0} day(s) will skip the loop", days));
         }
     }
 }

@@ -5,7 +5,7 @@ using TimeLoop.Managers;
 namespace TimeLoop.Modules.ConsoleCommands {
     public class EnableCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_enable_help");
+            return "Usage:\ntl_enable <0/1>\n    0 - Disables the mod.\n    1 - Enables the mod.";
         }
 
         public override string[] getCommands() {
@@ -13,13 +13,12 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.Localize("cmd_enable_desc");
+            return "Enables or disables the mod.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (_params.Count == 0) {
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_enable_state",
-                    ConfigManager.Instance.Config.Enabled));
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Is mod enabled? {0}", ConfigManager.Instance.Config.Enabled));
                 return;
             }
 
@@ -30,9 +29,9 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.SaveToFile();
             TimeLoopManager.Instance.UpdateLoopState();
             var newState = ConfigManager.Instance.Config.Enabled
-                ? LocaleManager.Instance.Localize("enabled")
-                : LocaleManager.Instance.Localize("disabled");
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_enable_return", newState));
+                ? "enabled"
+                : "disabled";
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("TimeLoop has been {0}", newState));
         }
     }
 }

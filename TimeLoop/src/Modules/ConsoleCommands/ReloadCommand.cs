@@ -1,10 +1,11 @@
+using TimeLoop.Helpers;
 using System.Collections.Generic;
 using TimeLoop.Managers;
 
 namespace TimeLoop.Modules.ConsoleCommands {
     public class ReloadCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_reload_help");
+            return "Usage:\ntl_reload\n    Reloads TimeLoop configuration from disk.";
         }
 
         public override string[] getCommands() {
@@ -12,14 +13,14 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_reload_desc");
+            return "Reloads TimeLoop configuration from disk.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (!Helpers.CommandHelper.ValidateCount(_params, 0)) return;
 
             ConfigManager.Instance.ReloadFromDisk();
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_reload_return"));
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("TimeLoop configuration reloaded."));
         }
     }
 }

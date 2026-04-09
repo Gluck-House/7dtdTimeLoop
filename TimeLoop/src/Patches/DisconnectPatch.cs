@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using TimeLoop.Helpers;
 using TimeLoop.Managers;
 
 namespace TimeLoop.Patches {
@@ -7,7 +8,7 @@ namespace TimeLoop.Patches {
         private static void Postfix(ConnectionManager __instance) {
             if (!Main.IsDedicatedServer())
                 return;
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_disconnected"));
+            Log.Out(TimeLoopText.WithPrefix("Player disconnected. Updating loop parameters."));
             TimeLoopManager.Instance.UpdateLoopState();
         }
     }

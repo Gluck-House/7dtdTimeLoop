@@ -18,7 +18,6 @@ It also supports:
 - per-player authorization
 - loop limits
 - skip-days
-- multiple locales
 - server console commands for runtime changes
 
 ## Installation
@@ -66,7 +65,6 @@ Example:
     <Enabled>true</Enabled>
     <RewindGraceSeconds>300</RewindGraceSeconds>
   </HordeNightProtection>
-  <Language>en_us</Language>
 </TimeLoopConfig>
 ```
 
@@ -80,8 +78,6 @@ Notes:
 - `HordeNightProtection.Enabled=true` enables a pre-horde safeguard: if time should stop on a scheduled blood moon day and the blood moon has not started yet, the mod waits `HordeNightProtection.RewindGraceSeconds` real seconds and then rewinds to the previous day at the same in-game time.
 - If the player condition recovers before the grace period ends, the pending horde-night rewind is cancelled.
 - The horde-night safeguard does not rewind after the blood moon has already started.
-- Locale files live in `i18n/`.
-
 ## Console Commands
 
 The mod exposes these server console commands:
@@ -104,8 +100,6 @@ The mod exposes these server console commands:
   Alias: `timeloop_skipdays`
 - `tl_state`
   Alias: `timeloop_state`
-- `tl_locale [locale]`
-  Alias: `timeloop_locale`
 
 Omitting arguments on most commands prints the current state.
 

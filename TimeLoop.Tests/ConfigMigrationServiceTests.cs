@@ -14,7 +14,6 @@ public class ConfigMigrationServiceTests {
             MinPlayers = 0,
             DaysToSkip = -5,
             LoopLimit = -2,
-            Language = "",
             HordeNightProtection = null!
         };
 
@@ -25,7 +24,6 @@ public class ConfigMigrationServiceTests {
         Assert.Equal(1, config.MinPlayers);
         Assert.Equal(0, config.DaysToSkip);
         Assert.Equal(0, config.LoopLimit);
-        Assert.Equal("en_us", config.Language);
         Assert.NotNull(config.HordeNightProtection);
         Assert.Equal(300, config.HordeNightProtection.RewindGraceSeconds);
     }

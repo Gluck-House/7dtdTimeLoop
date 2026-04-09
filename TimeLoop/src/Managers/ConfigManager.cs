@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Xml;
+using TimeLoop.Helpers;
 using TimeLoop.Models;
 using TimeLoop.Services;
 using TimeLoop.Wrappers;
@@ -75,8 +76,7 @@ namespace TimeLoop.Managers {
             XmlSerializerWrapper.FromXmlOverwrite(_absoluteFilePath, Config);
             PersistConfigIfNeeded(ConfigMigrationService.Migrate(Config) || ConfigNeedsMigration(Config));
             RefreshLastModified();
-            LocaleManager.Instance.SetLocale(Config.Language);
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_updated_config"));
+            Log.Out(TimeLoopText.WithPrefix("Configuration file updated."));
             TimeLoopManager.Instance.UpdateLoopState();
         }
 

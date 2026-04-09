@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using TimeLoop.Helpers;
 using TimeLoop.Managers;
 using TimeLoop.Models;
 using TimeLoop.Services;
@@ -12,7 +13,7 @@ namespace TimeLoop.Patches {
 
             if (_clientInfo.PlatformId == null)
                 return;
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_connected"));
+            Log.Out(TimeLoopText.WithPrefix("Player logged in. Updating loop parameters."));
             TimeLoopManager.Instance.UpdateLoopState();
 
             var playerData = new PlayerService().GetPlayer(_clientInfo);
@@ -24,7 +25,7 @@ namespace TimeLoop.Patches {
             ConfigManager.Instance.Config.Players.Add(player);
             ConfigManager.Instance.SaveToFile();
 
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_new", player.PlayerName, player.Id));
+            Log.Out(TimeLoopText.WithPrefix("Player {0} ({1}) added to config", player.PlayerName, player.Id));
         }
     }
 }

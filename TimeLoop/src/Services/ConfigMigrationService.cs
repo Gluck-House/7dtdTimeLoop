@@ -30,11 +30,6 @@ namespace TimeLoop.Services {
                 changed = true;
             }
 
-            if (string.IsNullOrWhiteSpace(config.Language)) {
-                config.Language = "en_us";
-                changed = true;
-            }
-
             if (config.ConfigVersion < 1) {
                 changed = true;
             }

@@ -18,11 +18,10 @@ namespace TimeLoop.Models {
             DaysToSkip = 0;
             LoopLimit = 0;
             HordeNightProtection = new HordeNightProtectionConfig();
-            Language = "en_us";
         }
 
         public ConfigModel(int configVersion, bool enabled, EMode mode, List<PlayerModel> players, int minPlayers,
-            int daysToSkip, int loopLimit, HordeNightProtectionConfig hordeNightProtection, string language) {
+            int daysToSkip, int loopLimit, HordeNightProtectionConfig hordeNightProtection) {
             ConfigVersion = configVersion;
             Enabled = enabled;
             Mode = mode;
@@ -31,7 +30,6 @@ namespace TimeLoop.Models {
             DaysToSkip = daysToSkip;
             LoopLimit = loopLimit;
             HordeNightProtection = hordeNightProtection ?? new HordeNightProtectionConfig();
-            Language = language;
         }
 
         [XmlElement("ConfigVersion")] public int ConfigVersion { get; set; }
@@ -67,7 +65,5 @@ namespace TimeLoop.Models {
         public bool ShouldSerializeLegacyHordeRewindGraceSeconds() {
             return false;
         }
-
-        [XmlElement("Language")] public string Language { get; set; }
     }
 }

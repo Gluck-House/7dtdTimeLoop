@@ -17,7 +17,6 @@ public class XmlSerializerWrapperTests {
                 MinPlayers = 3,
                 DaysToSkip = 2,
                 LoopLimit = 4,
-                Language = "pt_br",
                 HordeNightProtection = new HordeNightProtectionConfig(false, 90),
                 Players = new List<PlayerModel> {
                     new() { Id = "steam_1", PlayerName = "Alice", IsAuthorized = true },
@@ -34,7 +33,6 @@ public class XmlSerializerWrapperTests {
             Assert.Equal(original.MinPlayers, roundTripped.MinPlayers);
             Assert.Equal(original.DaysToSkip, roundTripped.DaysToSkip);
             Assert.Equal(original.LoopLimit, roundTripped.LoopLimit);
-            Assert.Equal(original.Language, roundTripped.Language);
             Assert.Equal(original.HordeNightProtection.Enabled, roundTripped.HordeNightProtection.Enabled);
             Assert.Equal(original.HordeNightProtection.RewindGraceSeconds,
                 roundTripped.HordeNightProtection.RewindGraceSeconds);
@@ -66,7 +64,6 @@ public class XmlSerializerWrapperTests {
                 MinPlayers = 7,
                 DaysToSkip = 1,
                 LoopLimit = 9,
-                Language = "pt_br",
                 HordeNightProtection = new HordeNightProtectionConfig(false, 45),
                 Players = new List<PlayerModel> {
                     new() { Id = "steam_9", PlayerName = "Carol", IsAuthorized = true }
@@ -80,7 +77,6 @@ public class XmlSerializerWrapperTests {
                 MinPlayers = 1,
                 DaysToSkip = 0,
                 LoopLimit = 0,
-                Language = "en_us",
                 HordeNightProtection = new HordeNightProtectionConfig(true, 300),
                 Players = new List<PlayerModel>()
             };
@@ -92,7 +88,6 @@ public class XmlSerializerWrapperTests {
             Assert.Equal(source.MinPlayers, destination.MinPlayers);
             Assert.Equal(source.DaysToSkip, destination.DaysToSkip);
             Assert.Equal(source.LoopLimit, destination.LoopLimit);
-            Assert.Equal(source.Language, destination.Language);
             Assert.Equal(source.HordeNightProtection.Enabled, destination.HordeNightProtection.Enabled);
             Assert.Equal(source.HordeNightProtection.RewindGraceSeconds,
                 destination.HordeNightProtection.RewindGraceSeconds);
@@ -129,7 +124,7 @@ public class XmlSerializerWrapperTests {
             XmlSerializerWrapper.ToXml(path, config);
 
             var document = XDocument.Load(path);
-            document.Root?.Element("Language")?.Remove();
+            document.Root?.Element("LoopLimit")?.Remove();
             document.Save(path);
 
             Assert.True(XmlSerializerWrapper.HasMissingSerializedMembers(path, config));
@@ -154,7 +149,6 @@ public class XmlSerializerWrapperTests {
                              <LoopLimit>0</LoopLimit>
                              <ProtectHordeNights>false</ProtectHordeNights>
                              <HordeRewindGraceSeconds>123</HordeRewindGraceSeconds>
-                             <Language>en_us</Language>
                            </TimeLoopConfig>
                            """;
 

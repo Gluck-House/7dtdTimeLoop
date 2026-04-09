@@ -6,7 +6,7 @@ using TimeLoop.Services;
 namespace TimeLoop.Modules.ConsoleCommands {
     public class AuthorizeClientCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_authorize_help");
+            return "Usage:\n(whitelist mode)\ntl_auth <player_name/platform_id> <0/1> - Authorizes a player to leave the time loop.\n    <player_name/platform_id> - Player name or Platform ID of the player to authorize.\n    <0/1> - 0 to unauthorized, 1 to authorized";
         }
 
         public override string[] getCommands() {
@@ -14,7 +14,7 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_authorize_desc");
+            return "Authorizes a player to leave the time loop.";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
@@ -24,8 +24,7 @@ namespace TimeLoop.Modules.ConsoleCommands {
             var playerService = new PlayerService();
             var player = playerService.GetPlayerByNameOrId(_params[0]);
             if (player == null) {
-                SdtdConsole.Instance.Output(
-                    LocaleManager.Instance.LocalizeWithPrefix("cmd_player_not_found", _params[0]));
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Client {0} could not be found in the database.", _params[0]));
                 return;
             }
 
@@ -33,10 +32,9 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.SaveToFile();
             TimeLoopManager.Instance.UpdateLoopState();
             var newState = player.IsAuthorized
-                ? LocaleManager.Instance.Localize("authorized")
-                : LocaleManager.Instance.Localize("unauthorized");
-            SdtdConsole.Instance.Output(
-                LocaleManager.Instance.LocalizeWithPrefix("cmd_authorized_return", newState, player.PlayerName));
+                ? "authorized"
+                : "unauthorized";
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("{0} client {1} to skip the time loop", newState, player.PlayerName));
         }
     }
 }

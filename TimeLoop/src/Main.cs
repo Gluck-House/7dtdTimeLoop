@@ -8,7 +8,6 @@ using TimeLoop.Managers;
 namespace TimeLoop {
     public class Main : IModApi {
         public const string ConfigFilePath = "TimeLooper.xml";
-        public const string LocaleFolderPath = "i18n/";
 
         public void InitMod(Mod _modInstance) {
             Log.Out("[TimeLoop] Initializing ...");
@@ -48,7 +47,6 @@ namespace TimeLoop {
 
             ConfigManager.Instantiate();
             TimeLoopManager.Instantiate();
-            LocaleManager.Instantiate(ConfigManager.Instance.Config.Language);
         }
 
         private void Update(ref ModEvents.SGameUpdateData data) {
@@ -73,7 +71,7 @@ namespace TimeLoop {
             if (TimeLoopManager.Instance.IsTimeFlowing)
                 return;
 
-            MessageHelper.SendPrivateChat(LocaleManager.Instance.Localize("onlogin_timeloop_active"), data.ClientInfo);
+            MessageHelper.SendPrivateChat("TimeLoop is active. Day will reset at midnight.", data.ClientInfo);
         }
     }
 }

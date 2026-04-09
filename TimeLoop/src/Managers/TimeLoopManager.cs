@@ -58,9 +58,9 @@ namespace TimeLoop.Managers {
                 return;
 
             _hordeRewindPendingAt = null;
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_cancelled"));
+            Log.Out(TimeLoopText.WithPrefix("Horde-night rewind cancelled."));
             if (notifyPlayers)
-                MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_cancelled"));
+                MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix("Horde-night rewind cancelled. Time flows normally."));
         }
 
         private bool TryStartHordeNightRewind(BloodMoonStatus bloodMoonStatus) {
@@ -71,8 +71,9 @@ namespace TimeLoop.Managers {
                 return true;
 
             _hordeRewindPendingAt = _gameWorldAdapter.GetUnscaledTime();
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_pending", HordeRewindGraceSeconds));
-            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_pending",
+            Log.Out(TimeLoopText.WithPrefix("Horde-night rewind scheduled in {0} second(s).", HordeRewindGraceSeconds));
+            MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix(
+                "Not enough players for horde night. Rewinding to the previous day in {0} second(s) unless conditions recover.",
                 HordeRewindGraceSeconds));
             return true;
         }
@@ -93,7 +94,8 @@ namespace TimeLoop.Managers {
             }
 
             if (!bloodMoonStatus.IsScheduledBloodMoonDay || !bloodMoonStatus.IsBeforeBloodMoonStart) {
-                Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_not_scheduled"));
+                Log.Out(TimeLoopText.WithPrefix(
+                    "Horde-night rewind not scheduled because the horde has already started or the day is not a scheduled blood moon."));
                 ClearPendingHordeNightRewind(notifyPlayers: false);
                 return;
             }
@@ -103,8 +105,9 @@ namespace TimeLoop.Managers {
 
             _timesLooped = 0;
             _hordeRewindPendingAt = null;
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_rewind"));
-            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_rewind"));
+            Log.Out(TimeLoopText.WithPrefix("Horde-night rewind executed."));
+            MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix(
+                "Not enough players for horde night. Rewinding to the previous day."));
             RewindToPreviousDaySameTime();
         }
 
@@ -133,33 +136,34 @@ namespace TimeLoop.Managers {
                 switch (newState) {
                     case false:
                         if (!TryStartHordeNightRewind(bloodMoonStatus))
-                            MessageHelper.SendGlobalChat(LocaleManager.Instance.Localize("loopstate_update_activated"));
+                            MessageHelper.SendGlobalChat("You seem to be stuck on the same day.");
                         break;
                     case true:
                         if (ConfigManager.Instance.Config.DaysToSkip > 0)
-                            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loopstate_daystoskip_reset"));
+                            Log.Out(TimeLoopText.WithPrefix("Loop skipped. Resetting DaysToSkip to 0"));
                         ConfigManager.Instance.Config.DaysToSkip = 0;
                         ClearPendingHordeNightRewind(notifyPlayers: true);
                         ConfigManager.Instance.SaveToFile();
-                        MessageHelper.SendGlobalChat(LocaleManager.Instance.Localize("loopstate_update_deactivated"));
+                        MessageHelper.SendGlobalChat("Time flows normally.");
                         break;
                 }
 
                 IsTimeFlowing = newState;
             }
 
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loopstate_status", newState,
-                ConfigManager.Instance.Config.DaysToSkip));
+            Log.Out(TimeLoopText.WithPrefix("Time flow status: {0}, days to skip: {1}",
+                newState, ConfigManager.Instance.Config.DaysToSkip));
         }
 
         private void SkipLoop() {
             _timesLooped = 0;
             _gameWorldAdapter.AdvanceWorldTime(20UL);
-            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_dayloop"));
+            MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix("Resetting day"));
             if (ConfigManager.Instance.DecreaseDaysToSkip() > 0)
-                MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_daystoskip_active",
+                MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix(
+                    "The following {0} day(s) will NOT loop",
                     ConfigManager.Instance.Config.DaysToSkip));
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_daystoskip_active",
+            Log.Out(TimeLoopText.WithPrefix("Skipping the loop for today. Remaining: {0} days",
                 ConfigManager.Instance.Config.DaysToSkip));
         }
 
@@ -169,8 +173,8 @@ namespace TimeLoop.Managers {
                 return;
             }
 
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_dayloop"));
-            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_dayloop"));
+            Log.Out(TimeLoopText.WithPrefix("Time reset."));
+            MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix("Resetting day"));
             var previousDay = GameUtils.WorldTimeToDays(_gameWorldAdapter.GetWorldTime()) - 1;
             _gameWorldAdapter.SetWorldTime(GameUtils.DaysToWorldTime(previousDay) + 20);
         }
@@ -179,13 +183,12 @@ namespace TimeLoop.Managers {
             if (!IsLoopLimitReached()) {
                 LoopDay();
                 _timesLooped++;
-                Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_limit", _timesLooped,
-                    ConfigManager.Instance.Config.LoopLimit));
+                Log.Out(TimeLoopText.WithPrefix("Loops: {0}/{1}", _timesLooped, ConfigManager.Instance.Config.LoopLimit));
                 return;
             }
 
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("loop_limitreached"));
-            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_limitreached"));
+            Log.Out(TimeLoopText.WithPrefix("Loop limit reached."));
+            MessageHelper.SendGlobalChat(TimeLoopText.WithPrefix("Loop limit reached."));
             SkipLoop();
         }
 

@@ -32,7 +32,5 @@
         <!-- Real seconds to wait before rewinding a scheduled horde night -->
         <RewindGraceSeconds>300</RewindGraceSeconds>
     </HordeNightProtection>
-    <!-- Global language for the mod. Check the i18n folder for available languages -->
-    <Language>en_us</Language>
     <!-- That's it, you're done. -->
 </TimeLoopConfig>

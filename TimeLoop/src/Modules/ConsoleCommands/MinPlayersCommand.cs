@@ -5,7 +5,7 @@ using TimeLoop.Managers;
 namespace TimeLoop.Modules.ConsoleCommands {
     public class MinPlayersCommand : TimeLoopConsoleCommandBase {
         protected override string GetHelpText() {
-            return LocaleManager.Instance.Localize("cmd_minplayers_help");
+            return "Usage:\ntl_min <amount>\n    <amount> - The minimum number of players required for time to flow normally.";
         }
 
         public override string[] getCommands() {
@@ -13,12 +13,12 @@ namespace TimeLoop.Modules.ConsoleCommands {
         }
 
         public override string getDescription() {
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_minplayers_desc");
+            return "(In Threshold Mode) Changes the minimum players requirement for time to flow normally";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             if (_params.Count == 0) {
-                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_minplayers_state",
+                SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Minimum required players: {0}",
                     ConfigManager.Instance.Config.MinPlayers));
                 return;
             }
@@ -29,7 +29,7 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.Config.MinPlayers = newValue;
             ConfigManager.Instance.SaveToFile();
             TimeLoopManager.Instance.UpdateLoopState();
-            SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_minplayers_return", newValue));
+            SdtdConsole.Instance.Output(TimeLoopText.WithPrefix("Minimum player requirements changed to {0}", newValue));
         }
     }
 }
