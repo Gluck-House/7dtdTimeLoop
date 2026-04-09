@@ -13,10 +13,6 @@
         <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="System.Text.Json" Version="8.0.5" />
-    </ItemGroup>
-
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
     </PropertyGroup>

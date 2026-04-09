@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 
 namespace TimeLoop.Managers {
     public class LocaleManager {
@@ -77,22 +76,183 @@ namespace TimeLoop.Managers {
         private static Dictionary<string, string> ParseLocaleDictionary(string json) {
             var localeDict = new Dictionary<string, string>();
             var trimmed = json.Trim().TrimStart('\uFEFF');
+            var index = 0;
 
-            using var document = JsonDocument.Parse(trimmed);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            SkipWhitespace(trimmed, ref index);
+            if (index >= trimmed.Length || trimmed[index] != '{')
                 throw new FormatException("Locale file root must be a JSON object.");
 
-            foreach (var property in document.RootElement.EnumerateObject()) {
-                if (property.Value.ValueKind != JsonValueKind.String)
-                    continue;
+            index++;
+            while (true) {
+                SkipWhitespace(trimmed, ref index);
+                if (index >= trimmed.Length)
+                    throw new FormatException("Locale file root must be a JSON object.");
 
-                localeDict[property.Name] = property.Value.GetString() ?? string.Empty;
+                if (trimmed[index] == '}') {
+                    index++;
+                    break;
+                }
+
+                var key = ReadJsonString(trimmed, ref index);
+                SkipWhitespace(trimmed, ref index);
+                if (index >= trimmed.Length || trimmed[index] != ':')
+                    throw new FormatException("Locale file root must be a JSON object.");
+
+                index++;
+                SkipWhitespace(trimmed, ref index);
+                if (index >= trimmed.Length)
+                    throw new FormatException("Locale file root must be a JSON object.");
+
+                if (trimmed[index] == '"')
+                    localeDict[key] = ReadJsonString(trimmed, ref index);
+                else
+                    SkipJsonValue(trimmed, ref index);
+
+                SkipWhitespace(trimmed, ref index);
+                if (index >= trimmed.Length)
+                    throw new FormatException("Locale file root must be a JSON object.");
+
+                if (trimmed[index] == ',') {
+                    index++;
+                    continue;
+                }
+
+                if (trimmed[index] == '}') {
+                    index++;
+                    break;
+                }
+
+                throw new FormatException("Locale file root must be a JSON object.");
             }
 
             if (localeDict.Count == 0)
                 throw new FormatException("Locale file does not contain any string entries.");
 
             return localeDict;
+        }
+
+        private static void SkipWhitespace(string text, ref int index) {
+            while (index < text.Length && char.IsWhiteSpace(text[index]))
+                index++;
+        }
+
+        private static string ReadJsonString(string text, ref int index) {
+            if (index >= text.Length || text[index] != '"')
+                throw new FormatException("Locale file root must be a JSON object.");
+
+            index++;
+            var value = new List<char>();
+            while (index < text.Length) {
+                var current = text[index++];
+                if (current == '"')
+                    return new string(value.ToArray());
+
+                if (current != '\\') {
+                    value.Add(current);
+                    continue;
+                }
+
+                if (index >= text.Length)
+                    throw new FormatException("Locale file root must be a JSON object.");
+
+                value.Add(ReadEscapedCharacter(text, ref index));
+            }
+
+            throw new FormatException("Locale file root must be a JSON object.");
+        }
+
+        private static char ReadEscapedCharacter(string text, ref int index) {
+            var escaped = text[index++];
+            return escaped switch {
+                '"' => '"',
+                '\\' => '\\',
+                '/' => '/',
+                'b' => '\b',
+                'f' => '\f',
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                'u' => ReadUnicodeEscape(text, ref index),
+                _ => escaped
+            };
+        }
+
+        private static char ReadUnicodeEscape(string text, ref int index) {
+            if (index + 4 > text.Length)
+                throw new FormatException("Locale file root must be a JSON object.");
+
+            var hex = text.Substring(index, 4);
+            index += 4;
+            return (char)Convert.ToInt32(hex, 16);
+        }
+
+        private static void SkipJsonValue(string text, ref int index) {
+            switch (text[index]) {
+                case '{':
+                    SkipJsonObject(text, ref index);
+                    return;
+                case '[':
+                    SkipJsonArray(text, ref index);
+                    return;
+                case '"':
+                    ReadJsonString(text, ref index);
+                    return;
+                default:
+                    while (index < text.Length && !IsValueTerminator(text[index]))
+                        index++;
+                    return;
+            }
+        }
+
+        private static void SkipJsonObject(string text, ref int index) {
+            var depth = 0;
+            while (index < text.Length) {
+                var current = text[index++];
+                if (current == '"') {
+                    index--;
+                    ReadJsonString(text, ref index);
+                    continue;
+                }
+
+                if (current == '{')
+                    depth++;
+                else if (current == '}') {
+                    depth--;
+                    if (depth == 0)
+                        return;
+                }
+            }
+
+            throw new FormatException("Locale file root must be a JSON object.");
+        }
+
+        private static void SkipJsonArray(string text, ref int index) {
+            var depth = 0;
+            while (index < text.Length) {
+                var current = text[index++];
+                if (current == '"') {
+                    index--;
+                    ReadJsonString(text, ref index);
+                    continue;
+                }
+
+                if (current == '[')
+                    depth++;
+                else if (current == ']') {
+                    depth--;
+                    if (depth == 0)
+                        return;
+                } else if (current == '{') {
+                    index--;
+                    SkipJsonObject(text, ref index);
+                }
+            }
+
+            throw new FormatException("Locale file root must be a JSON object.");
+        }
+
+        private static bool IsValueTerminator(char current) {
+            return current == ',' || current == '}' || current == ']' || char.IsWhiteSpace(current);
         }
 
         public string Localize(string key) {
