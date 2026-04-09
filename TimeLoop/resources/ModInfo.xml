@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModInfo>
     <Name value="TimeLoop"/>
-    <Version value="4.0.3"/>
+    <Version value="5.0.0"/>
     <DisplayName value="TimeLoop"/>
     <Description value="A 7 Days to Die mod that resets the day if not enough players or authorized players are online"/>
     <Author value="leehil, yuyui.moe, Gluck-House"/>
