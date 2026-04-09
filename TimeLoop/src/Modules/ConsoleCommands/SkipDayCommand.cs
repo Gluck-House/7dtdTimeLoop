@@ -3,8 +3,8 @@ using TimeLoop.Helpers;
 using TimeLoop.Managers;
 
 namespace TimeLoop.Modules.ConsoleCommands {
-    public class SkipDayCommand : ConsoleCmdAbstract {
-        public override string getHelp() {
+    public class SkipDayCommand : TimeLoopConsoleCommandBase {
+        protected override string GetHelpText() {
             return LocaleManager.Instance.Localize("cmd_skipdays_help");
         }
 
@@ -35,7 +35,7 @@ namespace TimeLoop.Modules.ConsoleCommands {
             ConfigManager.Instance.Config.DaysToSkip = days;
             ConfigManager.Instance.SaveToFile();
             if (days == 0) {
-                LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_disabled");
+                SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_skipdays_return_disabled"));
                 return;
             }
 

@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TimeLoopConfig>
     <!-- This is an example file.
-    Copy this file and rename it to Timelooper.xml to make your changes,
+    Copy this file and rename it to TimeLooper.xml to make your changes,
     or let the mod create this file for you, but without the comments
     -->
     <!-- Enables the mod -->
+    <ConfigVersion>2</ConfigVersion>
     <Enabled>true</Enabled>
     <!--
     "always" is Always mode, which means this day will loop no matter what.
@@ -24,6 +25,13 @@
     <DaysToSkip>0</DaysToSkip>
     <!-- Limit max loops per day. 0 to unlimited loops -->
     <LoopLimit>0</LoopLimit>
+    <!-- Horde-night protection settings -->
+    <HordeNightProtection>
+        <!-- If true, a scheduled horde night can rewind to the previous day when time should stop -->
+        <Enabled>true</Enabled>
+        <!-- Real seconds to wait before rewinding a scheduled horde night -->
+        <RewindGraceSeconds>300</RewindGraceSeconds>
+    </HordeNightProtection>
     <!-- Global language for the mod. Check the i18n folder for available languages -->
     <Language>en_us</Language>
     <!-- That's it, you're done. -->

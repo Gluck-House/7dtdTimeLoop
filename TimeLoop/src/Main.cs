@@ -61,6 +61,9 @@ namespace TimeLoop {
         }
 
         private void OnPlayerRespawn(ref ModEvents.SPlayerSpawnedInWorldData data) {
+            if (!IsDedicatedServer())
+                return;
+
             if (!ConfigManager.Instance.Config.Enabled)
                 return;
 

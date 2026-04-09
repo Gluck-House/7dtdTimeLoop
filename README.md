@@ -53,6 +53,7 @@ Example:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <TimeLoopConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ConfigVersion>2</ConfigVersion>
   <Enabled>true</Enabled>
   <Mode>whitelist</Mode>
   <Players>
@@ -61,6 +62,10 @@ Example:
   <MinPlayers>1</MinPlayers>
   <DaysToSkip>0</DaysToSkip>
   <LoopLimit>0</LoopLimit>
+  <HordeNightProtection>
+    <Enabled>true</Enabled>
+    <RewindGraceSeconds>300</RewindGraceSeconds>
+  </HordeNightProtection>
   <Language>en_us</Language>
 </TimeLoopConfig>
 ```
@@ -69,6 +74,12 @@ Notes:
 
 - `LoopLimit=0` means unlimited loops.
 - `DaysToSkip=0` disables skip-days.
+- `ConfigVersion` is managed by the mod and used for forward migrations of existing configs.
+- Existing config files are schema-upgraded on load: missing elements keep their default values in memory and are written back to `TimeLooper.xml`.
+- Editing `TimeLooper.xml` while the server is running now hot-reloads the public config properties correctly.
+- `HordeNightProtection.Enabled=true` enables a pre-horde safeguard: if time should stop on a scheduled blood moon day and the blood moon has not started yet, the mod waits `HordeNightProtection.RewindGraceSeconds` real seconds and then rewinds to the previous day at the same in-game time.
+- If the player condition recovers before the grace period ends, the pending horde-night rewind is cancelled.
+- The horde-night safeguard does not rewind after the blood moon has already started.
 - Locale files live in `i18n/`.
 
 ## Console Commands
@@ -77,8 +88,10 @@ The mod exposes these server console commands:
 
 - `tl_enable [0|1]`
   Aliases: `timeloop_enable`, `timeloop`
-- `tl_mode [0|1|2|3]`
+- `tl_mode [always|whitelist|threshold|whitelisted_threshold|0|1|2|3]`
   Alias: `timeloop_mode`
+- `tl_reload`
+  Alias: `timeloop_reload`
 - `tl_auth <platform_id|player_name> <0|1>`
   Aliases: `tl_authorize`, `timeloop_auth`, `timeloop_authorize`
 - `tl_min [amount]`

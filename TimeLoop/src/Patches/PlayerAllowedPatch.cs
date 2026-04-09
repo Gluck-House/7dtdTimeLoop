@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using TimeLoop.Managers;
 using TimeLoop.Models;
-using TimeLoop.Repositories;
+using TimeLoop.Services;
 
 namespace TimeLoop.Patches {
     [HarmonyPatch(typeof(AuthorizationManager), nameof(AuthorizationManager.playerAllowed))]
@@ -15,16 +15,16 @@ namespace TimeLoop.Patches {
             Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_connected"));
             TimeLoopManager.Instance.UpdateLoopState();
 
-            var playerData = new PlayerRepository().GetPlayerData(_clientInfo);
+            var playerData = new PlayerService().GetPlayer(_clientInfo);
 
             if (playerData != null)
                 return;
 
-            var plyData = new PlayerModel(_clientInfo);
-            ConfigManager.Instance.Config.Players.Add(plyData);
+            var player = new PlayerModel(_clientInfo);
+            ConfigManager.Instance.Config.Players.Add(player);
             ConfigManager.Instance.SaveToFile();
 
-            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_new", plyData.playerName, plyData.id));
+            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_new", player.PlayerName, player.Id));
         }
     }
 }

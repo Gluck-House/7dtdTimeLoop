@@ -1,43 +1,145 @@
 ﻿using System;
 using TimeLoop.Enums;
 using TimeLoop.Helpers;
-using TimeLoop.Repositories;
-using UnityEngine;
+using TimeLoop.Models;
+using TimeLoop.Services;
 
 namespace TimeLoop.Managers {
     public class TimeLoopManager {
-        private int _timesLooped;
+        private readonly IBloodMoonService _bloodMoonService;
+        private readonly IGameWorldAdapter _gameWorldAdapter;
+        private readonly PlayerService _playerService;
 
-        private double _unscaledTimeStamp;
+        private int _timesLooped;
+        private double _lastUpdateAt;
+        private double? _hordeRewindPendingAt;
+
+        private TimeLoopManager() : this(new GameWorldAdapter(), new PlayerService()) {
+        }
+
+        internal TimeLoopManager(IGameWorldAdapter gameWorldAdapter, PlayerService playerService) :
+            this(gameWorldAdapter, new BloodMoonService(gameWorldAdapter), playerService) {
+        }
+
+        internal TimeLoopManager(IGameWorldAdapter gameWorldAdapter, IBloodMoonService bloodMoonService,
+            PlayerService playerService) {
+            _gameWorldAdapter = gameWorldAdapter;
+            _bloodMoonService = bloodMoonService;
+            _playerService = playerService;
+        }
+
         public bool IsTimeFlowing { get; private set; } = true;
 
+        private int HordeRewindGraceSeconds => Math.Max(0, ConfigManager.Instance.Config.HordeNightProtection.RewindGraceSeconds);
+
         private bool IsDaySkippable() {
-            return !IsTimeFlowing && ConfigManager.Instance.Config.DaysToSkip > 0;
+            return TimeLoopPolicy.ShouldSkipCurrentLoop(IsTimeFlowing, ConfigManager.Instance.Config.DaysToSkip);
         }
 
         private bool IsLoopLimitReached() {
-            return _timesLooped >= ConfigManager.Instance.Config.LoopLimit && ConfigManager.Instance.IsLoopLimitEnabled;
+            return TimeLoopPolicy.IsLoopLimitReached(_timesLooped, ConfigManager.Instance.Config.LoopLimit);
+        }
+
+        private void RewindToPreviousDaySameTime() {
+            var worldTime = _gameWorldAdapter.GetWorldTime();
+            _gameWorldAdapter.SetWorldTime(worldTime > 24000UL ? worldTime - 24000UL : 0UL);
+        }
+
+        private int GetPendingHordeRewindSeconds() {
+            if (_hordeRewindPendingAt == null)
+                return 0;
+
+            var remainingSeconds = HordeRewindGraceSeconds - (_gameWorldAdapter.GetUnscaledTime() - _hordeRewindPendingAt.Value);
+            return Math.Max(0, (int)Math.Ceiling(remainingSeconds));
+        }
+
+        private void ClearPendingHordeNightRewind(bool notifyPlayers) {
+            if (_hordeRewindPendingAt == null)
+                return;
+
+            _hordeRewindPendingAt = null;
+            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_cancelled"));
+            if (notifyPlayers)
+                MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_cancelled"));
+        }
+
+        private bool TryStartHordeNightRewind(BloodMoonStatus bloodMoonStatus) {
+            if (!TimeLoopPolicy.CanScheduleHordeNightRewind(ConfigManager.Instance.Config, bloodMoonStatus))
+                return false;
+
+            if (_hordeRewindPendingAt != null)
+                return true;
+
+            _hordeRewindPendingAt = _gameWorldAdapter.GetUnscaledTime();
+            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_pending", HordeRewindGraceSeconds));
+            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_pending",
+                HordeRewindGraceSeconds));
+            return true;
+        }
+
+        private void CheckPendingHordeNightRewind() {
+            if (_hordeRewindPendingAt == null)
+                return;
+
+            if (IsTimeFlowing) {
+                ClearPendingHordeNightRewind(notifyPlayers: true);
+                return;
+            }
+
+            var bloodMoonStatus = _bloodMoonService.GetStatus();
+            if (!ConfigManager.Instance.Config.HordeNightProtection.Enabled) {
+                ClearPendingHordeNightRewind(notifyPlayers: false);
+                return;
+            }
+
+            if (!bloodMoonStatus.IsScheduledBloodMoonDay || !bloodMoonStatus.IsBeforeBloodMoonStart) {
+                Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_not_scheduled"));
+                ClearPendingHordeNightRewind(notifyPlayers: false);
+                return;
+            }
+
+            if (_gameWorldAdapter.GetUnscaledTime() - _hordeRewindPendingAt.Value < HordeRewindGraceSeconds)
+                return;
+
+            _timesLooped = 0;
+            _hordeRewindPendingAt = null;
+            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_horde_rewind"));
+            MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_horde_rewind"));
+            RewindToPreviousDaySameTime();
+        }
+
+        public TimeLoopStatus GetStatus() {
+            var playerActivity = _playerService.GetPlayerActivitySummary();
+            var bloodMoonStatus = _bloodMoonService.GetStatus();
+
+            return new TimeLoopStatus(
+                IsTimeFlowing,
+                ConfigManager.Instance.Config.Mode,
+                playerActivity,
+                ConfigManager.Instance.Config.DaysToSkip,
+                ConfigManager.Instance.Config.LoopLimit,
+                _timesLooped,
+                _hordeRewindPendingAt != null,
+                GetPendingHordeRewindSeconds(),
+                bloodMoonStatus);
         }
 
         public void UpdateLoopState() {
-            var plyDataRepo = new PlayerRepository();
-            var newState = ConfigManager.Instance.Config.Enabled && ConfigManager.Instance.Config.Mode switch {
-                EMode.Whitelist => plyDataRepo.IsAuthPlayerOnline(),
-                EMode.Threshold => plyDataRepo.IsMinPlayerThreshold(),
-                EMode.WhitelistedThreshold => plyDataRepo.IsMinAuthPlayerThreshold(),
-                EMode.Always => false,
-                _ => false
-            };
+            var playerActivity = _playerService.GetPlayerActivitySummary();
+            var newState = TimeLoopPolicy.DetermineTimeFlowing(ConfigManager.Instance.Config, playerActivity);
+            var bloodMoonStatus = _bloodMoonService.GetStatus();
 
             if (newState != IsTimeFlowing) {
                 switch (newState) {
                     case false:
-                        MessageHelper.SendGlobalChat(LocaleManager.Instance.Localize("loopstate_update_activated"));
+                        if (!TryStartHordeNightRewind(bloodMoonStatus))
+                            MessageHelper.SendGlobalChat(LocaleManager.Instance.Localize("loopstate_update_activated"));
                         break;
                     case true:
                         if (ConfigManager.Instance.Config.DaysToSkip > 0)
                             Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loopstate_daystoskip_reset"));
                         ConfigManager.Instance.Config.DaysToSkip = 0;
+                        ClearPendingHordeNightRewind(notifyPlayers: true);
                         ConfigManager.Instance.SaveToFile();
                         MessageHelper.SendGlobalChat(LocaleManager.Instance.Localize("loopstate_update_deactivated"));
                         break;
@@ -52,7 +154,7 @@ namespace TimeLoop.Managers {
 
         private void SkipLoop() {
             _timesLooped = 0;
-            GameManager.Instance.World.worldTime += 20;
+            _gameWorldAdapter.AdvanceWorldTime(20UL);
             MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_dayloop"));
             if (ConfigManager.Instance.DecreaseDaysToSkip() > 0)
                 MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_daystoskip_active",
@@ -69,8 +171,8 @@ namespace TimeLoop.Managers {
 
             Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_loop_dayloop"));
             MessageHelper.SendGlobalChat(LocaleManager.Instance.LocalizeWithPrefix("loop_dayloop"));
-            var previousDay = GameUtils.WorldTimeToDays(GameManager.Instance.World.GetWorldTime()) - 1;
-            GameManager.Instance.World.SetTime(GameUtils.DaysToWorldTime(previousDay) + 20);
+            var previousDay = GameUtils.WorldTimeToDays(_gameWorldAdapter.GetWorldTime()) - 1;
+            _gameWorldAdapter.SetWorldTime(GameUtils.DaysToWorldTime(previousDay) + 20);
         }
 
         private void LimitedLoop() {
@@ -87,18 +189,16 @@ namespace TimeLoop.Managers {
             SkipLoop();
         }
 
-
         public void CheckForTimeLoop() {
-            if (Math.Abs(_unscaledTimeStamp - Time.unscaledTimeAsDouble) <= 0.1)
+            if (Math.Abs(_lastUpdateAt - _gameWorldAdapter.GetUnscaledTime()) <= 0.1)
                 return;
+
+            CheckPendingHordeNightRewind();
 
             if (IsTimeFlowing)
                 return;
 
-            var worldTime = GameManager.Instance.World.GetWorldTime();
-            var dayTime = worldTime % 24000;
-
-            if (dayTime <= 10) {
+            if (_gameWorldAdapter.GetDayTime() <= 10) {
                 if (!ConfigManager.Instance.IsLoopLimitEnabled) {
                     LoopDay();
                     return;
@@ -107,7 +207,7 @@ namespace TimeLoop.Managers {
                 LimitedLoop();
             }
 
-            _unscaledTimeStamp = Time.unscaledTimeAsDouble;
+            _lastUpdateAt = _gameWorldAdapter.GetUnscaledTime();
         }
 
         public static implicit operator bool(TimeLoopManager? instance) {

@@ -19,13 +19,13 @@ namespace TimeLoop.Helpers {
 #endif
                 SdtdConsole.Instance.Output(LocaleManager.Instance.LocalizeWithPrefix("cmd_invalid_param_type",
                     paramIndex,
-                    typeof(T), value.GetType()));
+                    typeof(T).Name, value));
                 output = default!;
                 return false;
             }
         }
 
-        public static bool HasValue(object value, string[] array) {
+        public static bool HasValue(string value, string[] array) {
             if (array.Contains(value)) return true;
             SdtdConsole.Instance.Output(
                 LocaleManager.Instance.LocalizeWithPrefix("cmd_invalid_param", array.Join(), value)

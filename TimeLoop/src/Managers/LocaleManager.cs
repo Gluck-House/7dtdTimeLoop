@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace TimeLoop.Managers {
     public class LocaleManager {
@@ -53,7 +53,9 @@ namespace TimeLoop.Managers {
 
                 LoadedLocale = Path.GetFileNameWithoutExtension(localePath);
                 using var stream = new StreamReader(localePath);
-                return ParseLocaleDictionary(stream.ReadToEnd());
+                var localeDictionary = ParseLocaleDictionary(stream.ReadToEnd());
+                _isFallbackMode = false;
+                return localeDictionary;
             }
             catch (Exception e) {
                 Log.Error("[TimeLoop] Failed to load localization file. {0}", e.Message);
@@ -76,11 +78,15 @@ namespace TimeLoop.Managers {
             var localeDict = new Dictionary<string, string>();
             var trimmed = json.Trim().TrimStart('\uFEFF');
 
-            foreach (Match match in Regex.Matches(trimmed,
-                         "\"((?:\\\\.|[^\"\\\\])*)\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"")) {
-                var key = Regex.Unescape(match.Groups[1].Value);
-                var value = Regex.Unescape(match.Groups[2].Value);
-                localeDict[key] = value;
+            using var document = JsonDocument.Parse(trimmed);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new FormatException("Locale file root must be a JSON object.");
+
+            foreach (var property in document.RootElement.EnumerateObject()) {
+                if (property.Value.ValueKind != JsonValueKind.String)
+                    continue;
+
+                localeDict[property.Name] = property.Value.GetString() ?? string.Empty;
             }
 
             if (localeDict.Count == 0)
@@ -100,11 +106,11 @@ namespace TimeLoop.Managers {
         }
 
         public string LocalizeWithPrefix(string key) {
-            return string.Join(Localize("prefix"), Localize(key));
+            return string.Concat(Localize("prefix"), Localize(key));
         }
 
         public string LocalizeWithPrefix(string key, params object[] args) {
-            return string.Join(Localize("prefix"), Localize(key, args));
+            return string.Concat(Localize("prefix"), Localize(key, args));
         }
 
         #region Singleton

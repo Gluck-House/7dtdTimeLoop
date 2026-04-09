@@ -7,7 +7,7 @@ namespace TimeLoop.Patches {
         private static void Postfix(ConnectionManager __instance) {
             if (!Main.IsDedicatedServer())
                 return;
-            Log.Out(LocaleManager.Instance.Localize("log_player_disconnected"));
+            Log.Out(LocaleManager.Instance.LocalizeWithPrefix("log_player_disconnected"));
             TimeLoopManager.Instance.UpdateLoopState();
         }
     }

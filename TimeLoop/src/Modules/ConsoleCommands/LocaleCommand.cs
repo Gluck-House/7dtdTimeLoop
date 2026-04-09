@@ -3,8 +3,8 @@ using TimeLoop.Helpers;
 using TimeLoop.Managers;
 
 namespace TimeLoop.Modules.ConsoleCommands {
-    public class LocaleCommand : ConsoleCmdAbstract {
-        public override string GetHelp() {
+    public class LocaleCommand : TimeLoopConsoleCommandBase {
+        protected override string GetHelpText() {
             return LocaleManager.Instance.Localize("cmd_locale_help");
         }
 

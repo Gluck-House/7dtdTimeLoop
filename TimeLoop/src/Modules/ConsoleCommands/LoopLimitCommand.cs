@@ -3,8 +3,8 @@ using TimeLoop.Helpers;
 using TimeLoop.Managers;
 
 namespace TimeLoop.Modules.ConsoleCommands {
-    public class LoopLimitCommand : ConsoleCmdAbstract {
-        public override string getHelp() {
+    public class LoopLimitCommand : TimeLoopConsoleCommandBase {
+        protected override string GetHelpText() {
             return LocaleManager.Instance.LocalizeWithPrefix("cmd_looplimit_help");
         }
 

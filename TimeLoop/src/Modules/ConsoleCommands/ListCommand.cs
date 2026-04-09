@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using TimeLoop.Helpers;
 using TimeLoop.Managers;
 using TimeLoop.Models;
-using TimeLoop.Repositories;
+using TimeLoop.Services;
 using UniLinq;
 
 namespace TimeLoop.Modules.ConsoleCommands {
-    public class ListCommand : ConsoleCmdAbstract {
-        public override string GetHelp() {
+    public class ListCommand : TimeLoopConsoleCommandBase {
+        protected override string GetHelpText() {
             return LocaleManager.Instance.Localize("cmd_list_help");
         }
 
@@ -20,35 +20,33 @@ namespace TimeLoop.Modules.ConsoleCommands {
             return LocaleManager.Instance.LocalizeWithPrefix("cmd_list_desc");
         }
 
-        private string FormatPlayerList(List<PlayerModel> plyList) {
-            if (plyList.Count == 0)
+        private string FormatPlayerList(List<PlayerModel> players) {
+            if (players.Count == 0)
                 return LocaleManager.Instance.Localize("cmd_list_no_users");
 
-            var formattedPlyList = string.Join(
+            var formattedPlayers = string.Join(
                 Environment.NewLine,
-                plyList.Select(
-                    ply => LocaleManager.Instance.Localize("cmd_list_format", ply.playerName, ply.id,
-                        ply.skipTimeLoop)));
-            return LocaleManager.Instance.LocalizeWithPrefix("cmd_list_return", formattedPlyList + Environment.NewLine,
-                plyList.Count);
+                players.Select(
+                    player => LocaleManager.Instance.Localize("cmd_list_format", player.PlayerName, player.Id,
+                        player.IsAuthorized)));
+            return LocaleManager.Instance.LocalizeWithPrefix("cmd_list_return", formattedPlayers + Environment.NewLine,
+                players.Count);
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo) {
             string[] validParams = { "auth", "unauth", "all" };
+            var playerService = new PlayerService();
 
             if (_params.Count == 0 || _params[0].ToLower() == "all") {
-                var playerDataRepository = new PlayerRepository();
-                var plyList = FormatPlayerList(playerDataRepository.GetAllUsers());
-                SdtdConsole.Instance.Output(plyList);
+                SdtdConsole.Instance.Output(FormatPlayerList(playerService.GetAllUsers()));
                 return;
             }
 
             if (!CommandHelper.ValidateCount(_params, 1)) return;
             if (!CommandHelper.HasValue(_params[0].ToLower(), validParams)) return;
 
-            var plyDataRepo = new PlayerRepository();
             var unauthorizedInstead = _params[0].ToLower().Equals("unauth");
-            SdtdConsole.Instance.Output(FormatPlayerList(plyDataRepo.GetAllAuthorizedUsers(unauthorizedInstead)));
+            SdtdConsole.Instance.Output(FormatPlayerList(playerService.GetAllAuthorizedUsers(unauthorizedInstead)));
         }
     }
 }

@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
+        <NoWarn>$(NoWarn);MSB3277</NoWarn>
         <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(MSBuildProjectDirectory)/build/</BaseOutputPath>
         <OutputPath Condition="'$(OutputPath)' == ''">$(BaseOutputPath)TimeLoop/</OutputPath>
         <GameRefsDir Condition="'$(GameRefsDir)' == ''">$(MSBuildProjectDirectory)/../deps</GameRefsDir>
@@ -11,6 +12,10 @@
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
     </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>

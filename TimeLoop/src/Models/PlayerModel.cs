@@ -1,34 +1,32 @@
 ﻿using System;
 using System.Xml.Serialization;
-using UnityEngine.Serialization;
 
 namespace TimeLoop.Models
 {
     [Serializable]
     public class PlayerModel
     {
-
         [XmlAttribute("ID")]
-        public string id;
-        
+        public string Id { get; set; }
+
         [XmlAttribute("Name")]
-        public string playerName;
-        
+        public string PlayerName { get; set; }
+
         [XmlAttribute("Whitelisted")]
-        public bool skipTimeLoop;
+        public bool IsAuthorized { get; set; }
 
         public PlayerModel()
         {
-            this.id = Guid.NewGuid().ToString();
-            this.playerName = string.Empty;
-            this.skipTimeLoop = false;
+            Id = Guid.NewGuid().ToString();
+            PlayerName = string.Empty;
+            IsAuthorized = false;
         }
-        
+
         public PlayerModel(ClientInfo clientInfo)
         {
-            this.id = clientInfo.PlatformId.CombinedString;
-            this.playerName = clientInfo.playerName;
-            this.skipTimeLoop = false;
+            Id = clientInfo.PlatformId.CombinedString;
+            PlayerName = clientInfo.playerName;
+            IsAuthorized = false;
         }
     }
 }
