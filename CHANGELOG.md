@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/Gluck-House/7dtd-timeloop/compare/v5.0.1...v6.0.0) (2026-04-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove locale files, the tl_locale command, and the Language config field; all mod output is now hard-coded in English.
+
+### Code Refactoring
+
+* remove localization support ([550df9d](https://github.com/Gluck-House/7dtd-timeloop/commit/550df9d4dd7655b41498425c9333325daa7f4334))
+
 ## [5.0.1](https://github.com/Gluck-House/7dtd-timeloop/compare/v5.0.0...v5.0.1) (2026-04-09)
 
 
